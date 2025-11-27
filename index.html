@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Py-Cypher – Szyfrator plików w Pythonie z Fernet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="description"
+    content="Zróbmy prosty szyfrator plików w Pythonie z użyciem cryptography.Fernet. Zobaczmy cały kod, przejdźmy po funkcjach i sprawdźmy przykład użycia na pliku CSV."
+  />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <!-- HEADER -->
+    <header class="site-header">
+      <div class="container site-header__inner">
+        <div class="branding">
+          <h1 class="site-title">Py-Cypher – szyfrator plików w Pythonie</h1>
+          <p class="site-tagline">
+            Wykorzystanie biblioteki Fernet.
+          </p>
+        </div>
+        <nav class="site-nav">
+          <a href="#intro" class="site-nav__link">Wstęp</a>
+          <a href="#guide" class="site-nav__link">Kod i użycie</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="site-main">
+      <div class="container">
+        <!-- 1. WSTĘP -->
+        <section id="intro" class="section section--hero">
+          <div class="section__content">
+            <h2 class="section__title">Proste narzędzie do szyfrowania plików CSV</h2>
+            <p class="section__lead">
+              Załóżmy, że mamy zwykły katalog z plikami: notatki, CSV z danymi poufnymi,
+              może jakiś eksport z aplikacji. Zróbmy więc mały program w Pythonie, który
+              jednym poleceniem potrafi plik zaszyfrować, a drugim – odszyfrować.
+            </p>
+            <p class="section__text">
+              W projekcie wykorzystujemy bibliotekę <code>cryptography</code>
+              i narzędzie <code>Fernet</code>. Wygenerujemy klucz którym zaszyfrujemy i
+              odszyfrujemy dane. Program jest celowo prosty – działa z
+              terminala, nie ma bazy danych, nie udaje menedżera haseł. 
+            </p>
+          </div>
+
+          <div class="info-box">
+            <h3 class="info-box__title">Co znajdziesz poniżej</h3>
+            <ul class="info-box__list">
+              <li>pełny kod skryptu <code>py-cypher5.py</code>,</li>
+              <li>opis funkcja po funkcji: klucz, szyfrowanie, deszyfrowanie, menu,</li>
+              <li>przykładowy plik CSV do testów,</li>
+              <li>konkretne komendy terminalowe i zrzut ekranu z działania.</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 2. KOD I UŻYCIE KROK PO KROKU -->
+        <section id="guide" class="section">
+          <header class="section__header">
+            <h2 class="section__title">Kod i użycie skryptu krok po kroku</h2>
+            <p class="section__subtitle">
+              Przejdźmy od pełnego listingu, przez omówienie poszczególnych funkcji,
+              aż do uruchomienia gotowego narzędzia na realnym pliku.
+            </p>
+          </header>
+
+          <!-- Pełny kod + screenshot -->
+          <article class="doc-block">
+            <h3>Pełny skrypt <code>py-cypher5.py</code></h3>
+            <p class="doc-block__text">
+              Najpierw spójrzmy na całość – to jeden plik z kilkoma funkcjami
+              i prostym menu tekstowym.
+            </p>
+
+            <figure class="screenshot">
+              <img
+                src="img/kod-caly.png"
+                alt="Pełny plik py-cypher5.py wyświetlony w edytorze kodu z komentarzami"
+                loading="lazy"
+                style="max-width: 900px;"
+              />
+              <figcaption class="screenshot__caption">
+                Widok całego skryptu w edytorze – od importu Fernet do prostego menu CLI.
+              </figcaption>
+            </figure>
+
+            <div class="code-block">
+              <div class="code-block__header">
+                <span class="code-block__label">Python – pełny skrypt</span>
+                <button
+                  class="code-block__copy"
+                  type="button"
+                  data-copy-target="#code-full"
+                >
+                  Kopiuj
+                </button>
+              </div>
+              <pre id="code-full"><code># Importujemy klasę Fernet z biblioteki cryptography.
+# Fernet jest prostym sposobem na symetryczne szyfrowanie danych:
+# jednym kluczem szyfrujemy i odszyfrowujemy plik (np. CSV).
+from cryptography.fernet import Fernet
+
+
+def generate_key():
+    """
+    Generuje nowy klucz Fernet i zapisuje go w pliku klucz.key.
+    """
+    klucz = Fernet.generate_key()
+    with open("klucz.key", "wb") as plikklucz:
+        plikklucz.write(klucz)
+    print("Klucz zapisano w klucz.key")
+
+
+def load_key():
+    """
+    Wczytuje klucz z pliku klucz.key w trybie binarnym.
+    """
+    return open("klucz.key", "rb").read()
+
+
+def encrypt_file(targetfile, klucz):
+    """
+    Szyfruje plik targetfile przy użyciu podanego klucza.
+    Wynik zapisuje jako plik o nazwie targetfile + '.enc'.
+    """
+    f = Fernet(klucz)
+    with open(targetfile, "rb") as file:
+        data = file.read()              # odczyt danych z pliku (bajty)
+    encrypted = f.encrypt(data)         # szyfrowanie
+    with open(targetfile + ".enc", "wb") as file:
+        file.write(encrypted)           # zapis zaszyfrowanej zawartości
+    print(f"Plik {targetfile} zaszyfrowano do {targetfile}.enc")
+
+
+def decrypt_file(targetfile, klucz):
+    """
+    Deszyfruje plik targetfile (oczekiwany plik .enc)
+    i zapisuje odszyfrowany plik bez rozszerzenia .enc.
+    """
+    f = Fernet(klucz)
+    with open(targetfile, "rb") as file:
+        encrypted = file.read()         # odczyt zaszyfrowanych danych
+    decrypted = f.decrypt(encrypted)    # odszyfrowanie
+    original = targetfile.replace(".enc", "")
+    with open(original, "wb") as file:
+        file.write(decrypted)           # zapis odszyfrowanego pliku
+    print(f"Plik {targetfile} odszyfrowano do {original}")
+
+
+if __name__ == "__main__":
+    print("1: Generuj klucz")
+    print("2: Szyfruj plik")
+    print("3: Deszyfruj plik")
+    choice = input("Wybierz opcję: ")
+
+    if choice == "1":
+        generate_key()
+    elif choice in ["2", "3"]:
+        klucz = load_key()
+        targetfile = input("Podaj nazwę pliku: ")
+        if choice == "2":
+            encrypt_file(targetfile, klucz)
+        else:
+            decrypt_file(targetfile, klucz)
+    else:
+        print("Błąd: wybierz 1, 2 lub 3.")</code></pre>
+              <span class="code-block__feedback" aria-live="polite"></span>
+            </div>
+          </article>
+
+          <!-- Omówienie funkcji -->
+          <article class="doc-block">
+            <h3>Struktura pliku i odpowiedzialności funkcji</h3>
+
+            <h4>Import i kontekst</h4>
+            <p class="doc-block__text">
+              Na samej górze importujemy <code>Fernet</code> z biblioteki
+              <code>cryptography</code>. Cały skrypt jest zbudowany wokół tego
+              jednego prymitywu – reszta to tylko obsługa plików i prosty interfejs.
+            </p>
+
+            <h4><code>generate_key()</code> – jednorazowe wygenerowanie klucza</h4>
+            <p class="doc-block__text">
+              Funkcja <code>generate_key()</code> odpowiada za stworzenie klucza,
+              który będzie później używany zarówno do szyfrowania, jak i deszyfrowania.
+              W środku:
+            </p>
+            <ul>
+              <li><code>Fernet.generate_key()</code> – prosimy bibliotekę o bezpieczny klucz,</li>
+              <li>otwieramy plik <code>klucz.key</code> w trybie binarnym
+                  (<code>"wb"</code>) i zapisujemy bajty bez żadnych modyfikacji,</li>
+              <li>wypisujemy krótki komunikat, żeby użytkownik widział, że operacja się powiodła.</li>
+            </ul>
+            <p class="doc-block__text">
+              W praktyce ta funkcja jest wywoływana rzadko – typowo raz na nowy „zestaw” danych.
+            </p>
+
+            <h4><code>load_key()</code> – odczyt klucza z dysku</h4>
+            <p class="doc-block__text">
+              <code>load_key()</code> to komplementarna operacja: otwieramy
+              <code>klucz.key</code> w trybie <code>"rb"</code> i zwracamy jego zawartość.
+              Funkcja nie ma żadnych efektów ubocznych; jej jedynym zadaniem jest dostarczenie
+              bajtów klucza kolejnym funkcjom.
+            </p>
+
+            <h4><code>encrypt_file()</code> – szyfrowanie wskazanego pliku</h4>
+            <p class="doc-block__text">
+              Funkcja <code>encrypt_file(targetfile, klucz)</code> implementuje pełny przepływ
+              szyfrowania:
+            </p>
+            <ul>
+              <li>tworzymy obiekt <code>Fernet</code> na podstawie przekazanego klucza,</li>
+              <li>otwieramy plik <code>targetfile</code> w trybie binarnym i czytamy całą zawartość,</li>
+              <li>wykonujemy <code>f.encrypt(data)</code>, co daje zaszyfrowany, uwierzytelniony blob,</li>
+              <li>tworzymy nowy plik o nazwie <code>targetfile + ".enc"</code>,</li>
+              <li>zapisujemy wynik szyfrowania na dysk i logujemy krótką informację w terminalu.</li>
+            </ul>
+            <p class="doc-block__text">
+              Skrypt nie usuwa oryginalnego pliku – decyzja o tym, czy kasować „jawną” wersję,
+              jest pozostawiona użytkownikowi / procesowi, który wywołuje narzędzie.
+            </p>
+
+            <h4><code>decrypt_file()</code> – operacja odwrotna</h4>
+            <p class="doc-block__text">
+              <code>decrypt_file(targetfile, klucz)</code> bierze plik
+              zaszyfrowany (np. <code>pliktest.csv.enc</code>) i próbuje odtworzyć wersję jawną:
+            </p>
+            <ul>
+              <li>znów tworzymy obiekt <code>Fernet</code> z danego klucza,</li>
+              <li>wczytujemy cały zaszyfrowany plik do pamięci,</li>
+              <li>wykonujemy <code>f.decrypt(encrypted)</code> – jeśli klucz nie pasuje lub dane są
+                  uszkodzone, dostaniemy wyjątek,</li>
+              <li>konstruujemy nazwę wyjściową przez <code>replace(".enc", "")</code>,</li>
+              <li>zapisujemy odszyfrowane bajty jako zwykły plik.</li>
+            </ul>
+            <p class="doc-block__text">
+              Dzięki konwencji nazewniczej (<code>.enc</code>) odzyskujemy tę samą nazwę, którą
+              plik miał przed szyfrowaniem, bez trzymania dodatkowych metadanych.
+            </p>
+
+            <h4>Blok <code>if __name__ == "__main__"</code> – prosty interfejs CLI</h4>
+            <p class="doc-block__text">
+              Na końcu pliku mamy cienką warstwę interfejsu tekstowego – kilka
+              <code>print()</code> i <code>input()</code>, które spinają funkcje w jedno narzędzie.
+            </p>
+
+            <div class="code-block">
+              <div class="code-block__header">
+                <span class="code-block__label">Python – menu</span>
+                <button
+                  class="code-block__copy"
+                  type="button"
+                  data-copy-target="#code-menu"
+                >
+                  Kopiuj
+                </button>
+              </div>
+              <pre id="code-menu"><code>if __name__ == "__main__":
+    print("1: Generuj klucz")
+    print("2: Szyfruj plik")
+    print("3: Deszyfruj plik")
+    choice = input("Wybierz opcję: ")
+
+    if choice == "1":
+        generate_key()
+    elif choice in ["2", "3"]:
+        klucz = load_key()
+        targetfile = input("Podaj nazwę pliku: ")
+        if choice == "2":
+            encrypt_file(targetfile, klucz)
+        else:
+            decrypt_file(targetfile, klucz)
+    else:
+        print("Błąd: wybierz 1, 2 lub 3.")</code></pre>
+              <span class="code-block__feedback" aria-live="polite"></span>
+            </div>
+
+            <p class="doc-block__text">
+              Logika wyboru jest celowo prosta:
+            </p>
+            <ul>
+              <li>opcję <strong>1</strong> obsługuje samo <code>generate_key()</code>,</li>
+              <li>dla opcji <strong>2</strong> i <strong>3</strong> najpierw wczytujemy klucz
+                  (<code>load_key()</code>), a dopiero potem prosimy o nazwę pliku,</li>
+              <li>dalszy przepływ przekazujemy do <code>encrypt_file()</code> lub
+                  <code>decrypt_file()</code>,</li>
+              <li>dowolny inny wybór kończymy komunikatem o błędzie – bez prób zgadywania
+                  intencji użytkownika.</li>
+            </ul>
+          </article>
+
+          <!-- Implementacja w praktyce: plik CSV + terminal -->
+          <article class="doc-block">
+            <h3>Przygotowanie danych testowych</h3>
+            <p class="doc-block__text">
+              Do demonstracji używamy prostego pliku CSV – wystarczy zapisać go w tym samym
+              katalogu co skrypt <code>py-cypher5.py</code>.
+            </p>
+
+            <div class="code-block">
+              <div class="code-block__header">
+                <span class="code-block__label">CSV – dane testowe</span>
+                <button
+                  class="code-block__copy"
+                  type="button"
+                  data-copy-target="#code-csv"
+                >
+                  Kopiuj
+                </button>
+              </div>
+              <pre id="code-csv"><code>ID,Name,Age,City,Score
+1,Alice,25,New York,85
+2,Bob,30,Los Angeles,90
+3,Charlie,22,Chicago,78
+4,David,28,Houston,88
+5,Eva,26,Miami,92</code></pre>
+              <span class="code-block__feedback" aria-live="polite"></span>
+            </div>
+          </article>
+
+          <article class="doc-block">
+            <h3>Uruchamianie skryptu w terminalu</h3>
+            <p class="doc-block__text">
+              Skrypt działa interaktywnie, ale scenariusz użycia jest zawsze podobny.
+              Zróbmy to krok po kroku na przykładzie <code>pliktest.csv</code>.
+            </p>
+
+            <h4>Krok 0 – instalacja zależności</h4>
+            <div class="code-block">
+              <div class="code-block__header">
+                <span class="code-block__label">Instalacja cryptography</span>
+                <button
+                  class="code-block__copy"
+                  type="button"
+                  data-copy-target="#code-terminal-setup"
+                >
+                  Kopiuj
+                </button>
+              </div>
+              <pre id="code-terminal-setup"><code>pip install cryptography</code></pre>
+              <span class="code-block__feedback" aria-live="polite"></span>
+            </div>
+
+            <h4>Krok 1 – wygenerowanie klucza</h4>
+            <p class="doc-block__text">
+              Najpierw tworzymy klucz, który będzie używany do wszystkich
+              późniejszych operacji szyfrujących i deszyfrujących:
+            </p>
+            <div class="code-block">
+              <div class="code-block__header">
+                <span class="code-block__label">Generowanie klucza</span>
+                <button
+                  class="code-block__copy"
+                  type="button"
+                  data-copy-target="#code-terminal-key"
+                >
+                  Kopiuj
+                </button>
+              </div>
+              <pre id="code-terminal-key"><code>python py-cypher5.py
+# menu: wybieramy 1 (Generuj klucz)</code></pre>
+              <span class="code-block__feedback" aria-live="polite"></span>
+            </div>
+            <p class="doc-block__text">
+              W katalogu pojawia się <code>klucz.key</code>. W prawdziwym systemie
+              taki sekret najczęściej trafia do menedżera haseł / KMS; tutaj
+              zostaje lokalny plik, żeby skupić się na mechanice szyfrowania.
+            </p>
+
+            <h4>Krok 2 – szyfrowanie pliku</h4>
+            <p class="doc-block__text">
+              Skoro klucz już mamy, możemy zaszyfrować nasz roboczy CSV:
+            </p>
+            <div class="code-block">
+              <div class="code-block__header">
+                <span class="code-block__label">Szyfrowanie</span>
+                <button
+                  class="code-block__copy"
+                  type="button"
+                  data-copy-target="#code-terminal-encrypt"
+                >
+                  Kopiuj
+                </button>
+              </div>
+              <pre id="code-terminal-encrypt"><code>python py-cypher5.py
+# menu: wybieramy 2 (Szyfruj plik)
+# podajemy nazwę: pliktest.csv</code></pre>
+              <span class="code-block__feedback" aria-live="polite"></span>
+            </div>
+            <p class="doc-block__text">
+              Po tej operacji obok pliku <code>pliktest.csv</code> pojawia się
+              <code>pliktest.csv.enc</code>. To tę wersję możemy ewentualnie przechowywać
+              długoterminowo lub wysyłać dalej.
+            </p>
+
+            <h4>Krok 3 – odszyfrowanie i weryfikacja</h4>
+            <p class="doc-block__text">
+              Kiedy potrzebujemy wrócić do danych w formie jawnej, uruchamiamy skrypt
+              jeszcze raz:
+            </p>
+            <div class="code-block">
+              <div class="code-block__header">
+                <span class="code-block__label">Deszyfrowanie</span>
+                <button
+                  class="code-block__copy"
+                  type="button"
+                  data-copy-target="#code-terminal-decrypt"
+                >
+                  Kopiuj
+                </button>
+              </div>
+              <pre id="code-terminal-decrypt"><code>python py-cypher5.py
+# menu: wybieramy 3 (Deszyfruj plik)
+# podajemy nazwę: pliktest.csv.enc</code></pre>
+              <span class="code-block__feedback" aria-live="polite"></span>
+            </div>
+            <p class="doc-block__text">
+              Program odtwarza <code>pliktest.csv</code>. Można go porównać z oryginałem
+              – powinien być identyczny bajt po bajcie.
+            </p>
+
+            <h4>Przykładowa sesja – zrzut ekranu</h4>
+            <p class="doc-block__text">
+              Dla pełnego obrazu – tak wygląda rzeczywista sesja w terminalu,
+              z wszystkimi trzema krokami po kolei.
+            </p>
+            <figure class="screenshot">
+              <img
+                src="img/terminal-demo.png"
+                alt="Działanie programu py-cypher5.py w terminalu: generowanie klucza, szyfrowanie i deszyfrowanie pliku pliktest.csv"
+                loading="lazy"
+                style="max-width: 720px;"
+              />
+              <figcaption class="screenshot__caption">
+                Generowanie klucza, szyfrowanie <code>pliktest.csv</code> do
+                <code>pliktest.csv.enc</code> i ponowne odtworzenie pliku CSV.
+              </figcaption>
+            </figure>
+
+            <h4>Praktyczne uwagi</h4>
+            <ul>
+              <li><code>klucz.key</code> jest krytyczny – bez niego
+                  <code>Fernet</code> nie odszyfruje danych.</li>
+              <li>Skrypt nie usuwa wersji jawnej – decyzję o tym zostawiamy użytkownikowi
+                  lub procesowi automatyzującemu.</li>
+              <li>Konwencja nazewnicza <code>&lt;nazwa&gt;.enc</code> upraszcza parowanie
+                  plików zaszyfrowanych z oryginałami.</li>
+            </ul>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="container site-footer__inner">
+        <p class="site-footer__text">
+          &copy; <span id="year"></span> Py-Cypher – prosty szyfrator plików w Pythonie.
+        </p>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
